@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TubeBrief Video Summary",
+  "description": "LLM이 생성하는 영상 요약의 구조. videos.summary (jsonb)에 저장된다. 한 영상 = 한 통합 요약문 (CEO brief 톤). LLM 프롬프트에 이 스키마를 그대로 제시하고, 응답을 파싱·검증한 뒤 저장할 것.",
+  "type": "object",
+  "required": ["headline", "brief", "topics", "people", "source_type", "language"],
+  "properties": {
+    "headline": {
+      "type": "string",
+      "description": "카드 미리보기에 들어갈 1~2문장 TL;DR. 내용 핵심 한 줄."
+    },
+    "brief": {
+      "type": "string",
+      "description": "영상 전체를 다루는 통합 요약문. '한 장짜리 CEO brief' 톤. 문단은 \\n\\n 으로 구분. 글머리표/번호 매기기/마크다운 표기 금지. 길이는 입력 자료에 비례: 짧은 자료(~1500자) → 약 400~700자 / 중간(1500~7000자) → 약 700~1500자 / 긴 자료(7000자 이상) → 약 1500~3000자. source_type=transcript 이고 입력에 [mm:ss] 마커가 있을 때, 의미 있는 곳에 한해 본문에 `(mm:ss)` 형태로 시각 표시를 자연스럽게 삽입할 수 있다."
+    },
+    "topics": {
+      "type": "array",
+      "description": "영상이 다루는 주제/키워드 태그. 2~6개.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "people": {
+      "type": "array",
+      "description": "출연자/진행자/게스트. 자막·설명문에서 확인 가능한 경우만. 불확실하면 빈 배열로 둘 것 (지어내지 말 것).",
+      "items": {
+        "type": "object",
+        "required": ["name", "role", "note"],
+        "properties": {
+          "name": { "type": "string", "description": "인물 이름" },
+          "role": {
+            "type": "string",
+            "description": "역할 (예: 진행자, 게스트, 패널). 자막에 명시 없으면 빈 문자열."
+          },
+          "note": {
+            "type": "string",
+            "description": "한 줄 소개. 자막/설명문 근거가 있을 때만. 없으면 빈 문자열."
+          }
+        }
+      }
+    },
+    "source_type": {
+      "type": "string",
+      "description": "요약 근거. 'transcript' = 자막 기반(완전), 'metadata' = 제목+설명문 폴백(제한적, brief 안에 시각 표시 사용 금지).",
+      "enum": ["transcript", "metadata"]
+    },
+    "language": {
+      "type": "string",
+      "description": "요약 출력 언어 (예: 'ko'). 기본은 영상 자막 언어 또는 사용자 설정."
+    }
+  }
+}
