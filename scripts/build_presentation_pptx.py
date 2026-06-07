@@ -228,6 +228,208 @@ def make_slide(prs):
     return prs.slides.add_slide(prs.slide_layouts[6])  # blank
 
 
+def add_page_header(slide, title, slide_num, total=9, time_sec=0):
+    """공통 페이지 헤더 — 상단 라인 + 좌측 강조 바 + 제목 + 우측 메타 + 하단 구분선."""
+    # 상단 가는 컬러 바
+    top_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_W, Inches(0.08))
+    top_bar.fill.solid()
+    top_bar.fill.fore_color.rgb = COLOR_ACCENT
+    top_bar.line.fill.background()
+    top_bar.shadow.inherit = False
+
+    # 좌측 강조 바 (제목 옆)
+    accent = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(0.5), Inches(0.4), Inches(0.12), Inches(0.5)
+    )
+    accent.fill.solid()
+    accent.fill.fore_color.rgb = COLOR_ACCENT
+    accent.line.fill.background()
+    accent.shadow.inherit = False
+
+    # 제목
+    add_text(slide, Inches(0.78), Inches(0.32), Inches(10), Inches(0.7),
+             title, size=24, bold=True, color=COLOR_PRIMARY)
+    # 우측 메타
+    meta = f"{slide_num}/{total}  ·  {time_sec}초"
+    add_text(slide, Inches(11), Inches(0.45), Inches(2.2), Inches(0.4),
+             meta, size=11, color=COLOR_GRAY, align=PP_ALIGN.RIGHT)
+
+    # 헤더 아래 가는 구분선
+    divider = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(0.5), Inches(1.1), Inches(12.3), Inches(0.02)
+    )
+    divider.fill.solid()
+    divider.fill.fore_color.rgb = COLOR_LIGHT_GRAY
+    divider.line.fill.background()
+    divider.shadow.inherit = False
+
+
+def add_callout(slide, x, y, w, h, label, message, accent_color=None,
+                bg_color=None):
+    """강조 callout — 작은 라벨 + 큰 메시지. 좌측 굵은 색 바 + 옅은 배경."""
+    accent_color = accent_color or COLOR_ACCENT
+    bg_color = bg_color or RGBColor(0xF0, 0xF6, 0xFF)
+
+    # 배경 박스
+    box = slide.shapes.add_shape(
+        MSO_SHAPE.ROUNDED_RECTANGLE,
+        Inches(x), Inches(y), Inches(w), Inches(h)
+    )
+    box.fill.solid()
+    box.fill.fore_color.rgb = bg_color
+    box.line.color.rgb = accent_color
+    box.line.width = Pt(0.75)
+    box.shadow.inherit = False
+    box.text_frame.text = ""
+
+    # 좌측 강조 바
+    bar = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(x), Inches(y + 0.08), Inches(0.1), Inches(h - 0.16)
+    )
+    bar.fill.solid()
+    bar.fill.fore_color.rgb = accent_color
+    bar.line.fill.background()
+    bar.shadow.inherit = False
+
+    # 라벨 + 메시지 텍스트
+    tx = slide.shapes.add_textbox(
+        Inches(x + 0.3), Inches(y + 0.1),
+        Inches(w - 0.4), Inches(h - 0.2)
+    )
+    tf = tx.text_frame
+    tf.word_wrap = True
+    tf.margin_left = Inches(0)
+    tf.margin_right = Inches(0)
+    tf.margin_top = Inches(0)
+    tf.margin_bottom = Inches(0)
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.LEFT
+    r = p.add_run()
+    r.text = label
+    r.font.name = "맑은 고딕"
+    r.font.size = Pt(11)
+    r.font.bold = True
+    r.font.color.rgb = accent_color
+
+    p2 = tf.add_paragraph()
+    p2.alignment = PP_ALIGN.LEFT
+    p2.space_before = Pt(3)
+    r2 = p2.add_run()
+    r2.text = message
+    r2.font.name = "맑은 고딕"
+    r2.font.size = Pt(20)
+    r2.font.bold = True
+    r2.font.color.rgb = COLOR_PRIMARY
+
+
+def add_card_v2(slide, x, y, w, h, title, items, header_bg=None,
+                title_color=None):
+    """제목 헤더(옅은 배경) + 본문 분리. 본문은 불릿 리스트, 행 간격 넉넉."""
+    header_bg = header_bg or RGBColor(0xE7, 0xEF, 0xFB)
+    title_color = title_color or COLOR_PRIMARY
+
+    # 외곽 박스 (흰 배경)
+    outer = slide.shapes.add_shape(
+        MSO_SHAPE.ROUNDED_RECTANGLE,
+        Inches(x), Inches(y), Inches(w), Inches(h)
+    )
+    outer.fill.solid()
+    outer.fill.fore_color.rgb = COLOR_WHITE
+    outer.line.color.rgb = COLOR_BOX_BORDER
+    outer.line.width = Pt(1)
+    outer.shadow.inherit = False
+    outer.text_frame.text = ""
+
+    # 제목 헤더 영역 (옅은 배경 띠)
+    header_h = 0.55
+    header = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(x + 0.04), Inches(y + 0.04),
+        Inches(w - 0.08), Inches(header_h)
+    )
+    header.fill.solid()
+    header.fill.fore_color.rgb = header_bg
+    header.line.fill.background()
+    header.shadow.inherit = False
+    tf = header.text_frame
+    tf.margin_left = Inches(0.2)
+    tf.margin_right = Inches(0.15)
+    tf.margin_top = Inches(0.05)
+    tf.margin_bottom = Inches(0.05)
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.LEFT
+    r = p.add_run()
+    r.text = title
+    r.font.name = "맑은 고딕"
+    r.font.size = Pt(14)
+    r.font.bold = True
+    r.font.color.rgb = title_color
+
+    # 본문 영역 (제목 아래 일정 간격)
+    body_y = y + header_h + 0.25
+    body_h = h - header_h - 0.35
+    body_box = slide.shapes.add_textbox(
+        Inches(x + 0.25), Inches(body_y),
+        Inches(w - 0.5), Inches(body_h)
+    )
+    tf2 = body_box.text_frame
+    tf2.margin_left = Inches(0)
+    tf2.margin_right = Inches(0)
+    tf2.margin_top = Inches(0)
+    tf2.margin_bottom = Inches(0)
+    tf2.word_wrap = True
+
+    for i, item in enumerate(items):
+        p = tf2.paragraphs[0] if i == 0 else tf2.add_paragraph()
+        p.alignment = PP_ALIGN.LEFT
+        p.space_before = Pt(8) if i > 0 else Pt(0)
+        p.space_after = Pt(0)
+        p.line_spacing = 1.35
+        # 불릿
+        r1 = p.add_run()
+        r1.text = "•  "
+        r1.font.name = "맑은 고딕"
+        r1.font.size = Pt(12)
+        r1.font.bold = True
+        r1.font.color.rgb = COLOR_ACCENT
+        # 텍스트
+        r2 = p.add_run()
+        r2.text = item
+        r2.font.name = "맑은 고딕"
+        r2.font.size = Pt(12)
+        r2.font.color.rgb = COLOR_GRAY
+
+
+def add_hyperlink_text(slide, x, y, w, h, text, url, size=14,
+                        color=None, bold=False):
+    """텍스트에 하이퍼링크 적용 — 밑줄 + 강조 색."""
+    color = color or COLOR_ACCENT
+    tx = slide.shapes.add_textbox(x, y, w, h)
+    tf = tx.text_frame
+    tf.word_wrap = True
+    tf.margin_left = Emu(0)
+    tf.margin_right = Emu(0)
+    tf.margin_top = Emu(0)
+    tf.margin_bottom = Emu(0)
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.LEFT
+    r = p.add_run()
+    r.text = text
+    r.font.name = "맑은 고딕"
+    r.font.size = Pt(size)
+    r.font.bold = bold
+    r.font.color.rgb = color
+    r.font.underline = True
+    r.hyperlink.address = url
+    return tx
+
+
 def main():
     prs = Presentation()
     prs.slide_width = SLIDE_W
@@ -259,13 +461,20 @@ def main():
              size=16, color=COLOR_GRAY)
     add_text(s, Inches(5.0), Inches(3.8), Inches(7.8), Inches(0.5),
              "GitHub", size=12, bold=True, color=COLOR_PRIMARY)
-    add_text(s, Inches(5.0), Inches(4.2), Inches(7.8), Inches(0.5),
-             "https://github.com/leeyongjoo9-rgb/tubebrief_mvp",
-             size=14, color=COLOR_GRAY)
+    add_hyperlink_text(
+        s, Inches(5.0), Inches(4.2), Inches(7.8), Inches(0.5),
+        "https://github.com/leeyongjoo9-rgb/tubebrief_mvp",
+        "https://github.com/leeyongjoo9-rgb/tubebrief_mvp",
+        size=14,
+    )
     add_text(s, Inches(5.0), Inches(4.9), Inches(7.8), Inches(0.5),
              "Service URL", size=12, bold=True, color=COLOR_PRIMARY)
-    add_text(s, Inches(5.0), Inches(5.3), Inches(7.8), Inches(0.5),
-             "https://tubebrief-mvp.vercel.app/", size=14, color=COLOR_GRAY)
+    add_hyperlink_text(
+        s, Inches(5.0), Inches(5.3), Inches(7.8), Inches(0.5),
+        "https://tubebrief-mvp.vercel.app/",
+        "https://tubebrief-mvp.vercel.app/",
+        size=14,
+    )
     add_text(s, Inches(5.0), Inches(6.0), Inches(7.8), Inches(0.4),
              "학번: _(제출 전 본인 학번 기입)_", size=11, color=COLOR_GRAY)
 
@@ -273,70 +482,110 @@ def main():
     # Slide 2 — 문제정의와 대상 사용자 (45초)
     # ─────────────────────────────────────────────────────────────
     s = make_slide(prs)
-    add_header(s, "2. 문제정의와 대상 사용자", 2, time_sec=45)
-    # 핵심 메시지
-    add_text(s, Inches(0.5), Inches(1.2), Inches(12), Inches(0.7),
-             "구독 채널이 많아질수록 무엇부터 볼지 모른다.",
-             size=22, bold=True, color=COLOR_PRIMARY)
-    # 4박스
-    add_box(s, Inches(0.5), Inches(2.3), Inches(5.9), Inches(2.0),
-            "대상 사용자",
-            ["구독 채널 8개 이상",
-             "콘텐츠 중심으로 보고 싶지만 시간이 부족한 개인",
-             "정보 비용을 최소화해 의사결정에 쓰고 싶은 사용자"])
-    add_box(s, Inches(6.9), Inches(2.3), Inches(5.9), Inches(2.0),
-            "사용 상황",
-            ["매일 채널마다 1~5편 신규 영상 누적",
-             "어떤 영상에 시간을 투자할지 판단 어려움",
-             "그러는 사이 오래된 영상은 RSS 에서 사라짐"])
-    add_box(s, Inches(0.5), Inches(4.5), Inches(5.9), Inches(2.0),
-            "기존 한계",
-            ["유튜브 자막은 길고 비구조화 텍스트",
-             "한 줄 캡션은 정보 밀도 부족",
-             "알고리즘 추천은 본인 관심사와 어긋남"])
-    add_box(s, Inches(6.9), Inches(4.5), Inches(5.9), Inches(2.0),
-            "우리의 가설",
-            ["채널을 등록만 해두면 → 매일 자동으로 요약 보고서가 쌓이고",
-             "1분 안에 영상 핵심을 파악 → 골라서 시청",
-             "단순 캡션 아닌 헤드라인·본문·출연자·기업·시각 점프"],
-            title_color=COLOR_ACCENT)
+    add_page_header(s, "2. 문제정의와 대상 사용자", 2, time_sec=45)
+
+    # 문제 정의 — callout (한 줄 강조)
+    add_callout(
+        s, x=0.5, y=1.35, w=12.3, h=0.95,
+        label="문제 정의",
+        message="정보는 쏟아지고 시간은 부족하다.",
+    )
+
+    # 상단 1행 3박스 — 문제의식
+    add_card_v2(
+        s, x=0.5, y=2.55, w=4.0, h=2.4,
+        title="기존 한계",
+        items=[
+            "유튜브 자막은 길고 비구조화 텍스트",
+            "한 줄 캡션은 정보 밀도 부족",
+            "알고리즘 추천은 본인 관심사와 어긋남",
+        ],
+    )
+    add_card_v2(
+        s, x=4.65, y=2.55, w=4.0, h=2.4,
+        title="사용 상황",
+        items=[
+            "매일 채널마다 1~5편 신규 영상 누적",
+            "어떤 영상에 시간을 투자할지 판단 어려움",
+            "오래된 영상은 RSS 에서 사라짐",
+        ],
+    )
+    add_card_v2(
+        s, x=8.8, y=2.55, w=4.0, h=2.4,
+        title="대상 사용자",
+        items=[
+            "구독 채널 3개 이상",
+            "콘텐츠 중심 시청 / 시간 부족한 개인",
+            "정보 비용 최소화로 의사결정에 쓰는 사용자",
+        ],
+    )
+
+    # 하단 우리의 가설 (전체 폭, 더 진한 헤더 — 해결 방향 강조)
+    add_card_v2(
+        s, x=0.5, y=5.2, w=12.3, h=2.0,
+        title="우리의 가설 — 해결 방향",
+        items=[
+            "채널을 등록만 해두면 → 매일 자동으로 요약 보고서가 쌓임",
+            "1분 안에 영상 핵심을 파악 → 골라서 시청",
+            "단순 요약이 아닌 핵심 내용을 파악해 정보 제공 (헤드라인·본문·출연자·기업·시각 점프)",
+        ],
+        header_bg=RGBColor(0xD1, 0xE0, 0xF7),
+        title_color=COLOR_ACCENT,
+    )
 
     # ─────────────────────────────────────────────────────────────
     # Slide 3 — 서비스 개요와 핵심 기능 (45초)
     # ─────────────────────────────────────────────────────────────
     s = make_slide(prs)
-    add_header(s, "3. 서비스 개요와 핵심 기능", 3, time_sec=45)
-    add_text(s, Inches(0.5), Inches(1.2), Inches(12.3), Inches(0.7),
-             "매일 자동 감지 → 자막+LLM → 구조화 한 장 보고서 → 대시보드 아카이빙",
-             size=18, bold=True, color=COLOR_PRIMARY)
-    # 핵심 기능 3개
-    add_box(s, Inches(0.5), Inches(2.3), Inches(4.05), Inches(4.4),
-            "① 자동 감지 cron",
-            ["• Vercel Cron 일 1회",
-             "• RSS 폴링 → 자막 추출 → LLM 요약 직렬 실행",
-             "• 자막 실패 시 메타데이터 폴백",
-             "• 인증된 Bearer 호출만 허용",
-             "",
-             "→ 사용자 개입 0 회"])
-    add_box(s, Inches(4.65), Inches(2.3), Inches(4.05), Inches(4.4),
-            "② 코너 단위 구독",
-            ["• 한 채널 안 여러 코너 중 원하는 것만",
-             "• include / exclude 키워드 AND 필터",
-             "• 제목 + RSS 설명문 함께 검색",
-             "• 호스트 해시태그 (예: #곽재식) 도 매치",
-             "",
-             "→ MBC 라디오 시사처럼 7프로그램 채널 안 권순표만 받기 가능"])
-    add_box(s, Inches(8.85), Inches(2.3), Inches(4.05), Inches(4.4),
-            "③ 출연자 ↔ 거론 인물 분리",
-            ["• people: 직접 출연한 외부 인물만",
-             "• mentioned_people: 대화 중 거론된 인물 (역사적 인물 등)",
-             "• 채널 호스트 자동 제외",
-             "• 환각 방지: 자막에 근거 없으면 비움",
-             "",
-             "→ 곽재식 = people, 이호왕·김수암 = mentioned_people"],
-            title_color=COLOR_ACCENT)
+    add_page_header(s, "3. 서비스 개요와 핵심 기능", 3, time_sec=45)
+
+    # 서비스 한 줄 — callout
+    add_callout(
+        s, x=0.5, y=1.35, w=12.3, h=0.95,
+        label="서비스 한 줄",
+        message="매일 자동 감지 → LLM → 핵심 요약 보고서 → 대시보드 아카이빙",
+    )
+
+    # 핵심 기능 3박스 — 동일 높이 (제목 아래 일정 간격, 내용량 다르면 하단 공백 OK)
+    card_y = 2.55
+    card_h = 4.4
+    add_card_v2(
+        s, x=0.5, y=card_y, w=4.05, h=card_h,
+        title="① 자동 감지 cron",
+        items=[
+            "Vercel Cron 일 1회",
+            "RSS 폴링 → 자막 추출 → LLM 요약 직렬 실행",
+            "자막 실패 시 메타데이터 폴백",
+            "인증된 Bearer 호출만 허용",
+            "→ 사용자 개입 0 회",
+        ],
+    )
+    add_card_v2(
+        s, x=4.65, y=card_y, w=4.05, h=card_h,
+        title="② 유연한 채널 등록",
+        items=[
+            "채널 전체 등록 — 핸들(@) 적용",
+            "특정 영상만 — include/exclude 키워드 AND 필터",
+            "제목 + RSS 설명문 함께 검색",
+            "호스트 해시태그 매치",
+            "예: MBC 라디오 시사 — [뉴스하이킥] + 출연자명",
+            "예: 이강민의 잡지사 — #곽재식 회차만",
+        ],
+    )
+    add_card_v2(
+        s, x=8.8, y=card_y, w=4.05, h=card_h,
+        title="③ 출연자 ↔ 거론 인물 분리",
+        items=[
+            "people: 직접 출연한 외부 인물만",
+            "mentioned_people: 대화 중 거론된 인물",
+            "채널 호스트 자동 제외",
+            "환각 방지: 자막에 근거 없으면 비움",
+        ],
+        title_color=COLOR_ACCENT,
+    )
+
     # 비고
-    add_text(s, Inches(0.5), Inches(6.95), Inches(12), Inches(0.4),
+    add_text(s, Inches(0.5), Inches(7.1), Inches(12), Inches(0.3),
              "비고: 검색·필터·텍스트 내보내기는 v2 후보 (미구현)",
              size=10, color=COLOR_GRAY)
 
