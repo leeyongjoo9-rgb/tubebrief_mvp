@@ -1,6 +1,8 @@
 # 제품 요구사항 정의서 (PRD) — TubeBrief
 
-> **버전** v2.0 (보완본) · **목표** 2주 내 작동 가능한 MVP · **전략** 백엔드 최소화 + 프론트 집중 + 자동화 파이프라인 명문화
+> **버전** v3.0 (구현 완료본) · **MVP 완성일** 2026-06-07 · **전략** 백엔드 최소화 + 자동화 파이프라인 + LLM 출력 스키마 강제
+>
+> **GitHub**: https://github.com/leeyongjoo9-rgb/tubebrief_mvp · **Service**: https://tubebrief-mvp.vercel.app/
 
 ---
 
@@ -118,17 +120,45 @@
 
 ---
 
-## 9. 2주 완성 스케줄 (수정본)
+## 9. 2주 완성 스케줄 — 진행 결과
 
-**1주차 — UI + 데이터 골격**
-- v0.dev로 대시보드/설정 화면 초안 → Next.js 이식.
-- Supabase 테이블 설계(channels, videos: `video_id` UNIQUE, status 필드 포함).
-- 채널 RSS 파싱해 신규 영상 목록을 화면에 뿌리는 **수동 트리거** 버전 완성.
+**1주차 — 인프라 + 파이프라인 (계획대로 진행)**
+- Next.js + Tailwind + shadcn/ui + Supabase 초기화
+- DB 스키마: `channels`, `videos` (+ 사용자 추가 `subscriptions`, `transcripts`) 생성
+- RSS 신규 감지 + 자막 추출 + 메타데이터 폴백 + LLM 구조화 요약 → 전체 파이프라인 작동
+- 영상 88+ 건 실제 처리 검증
 
-**2주차 — 파이프라인 + 자동화**
-- 자막 추출 → LLM 요약 → 저장 연결. **폴백 경로 구현.**
-- 수동 트리거를 **Cron으로 전환**(핵심 P0). "마지막 확인" 상태 표시.
-- 데모 채널 세팅 + 발표용 파이프라인 다이어그램 정리.
+**2주차 — 자동화 + 품질 개선 + 배포**
+- `/api/cron` 통합 엔드포인트 — refresh → process → summarize 직렬 실행
+- Vercel Cron 일 1회 자동 트리거 등록 (Hobby 제약 60초 안에 들어가도록 limit 보수적 설정)
+- 채널 관리 UI (`/channels`) 추가 — 폼으로 채널·구독 등록·삭제, 서버 액션으로 비밀 키 미노출
+- **요약 품질 반복 개선**: 옛 규칙(brief 290자 평균) → 강화된 규칙(brief 2000자대) → 사용자 검증 후 `mentioned_people`·`companies` 필드 추가
+- GitHub push → Vercel 배포 → 첫 cron 검증 완료
+
+## 9-1. 실제 구현된 산출물 (v3.0)
+
+**v2.0 PRD 대비 추가/변경된 구현**
+| 영역 | v2.0 계획 | v3.0 실제 구현 |
+|---|---|---|
+| DB 모델 | channels + videos | + **subscriptions** (channel-keyword 매핑) + **transcripts** (자막 별도 저장) |
+| 신규 감지 필터 | RSS 단순 매치 | **제목 + RSS 설명문** 함께 검색. 호스트가 제목에 없고 설명문 해시태그(`#곽재식`)에만 있는 채널도 잡힘 |
+| LLM 출력 스키마 | 주제·출연자·타임스탬프 sections | `headline` + **`brief` (CEO brief 톤 통합 산문)** + topics + **`people` / `mentioned_people` 분리** + **`companies` (6규칙 노이즈 차단)** |
+| LLM 모델 | Claude Haiku 또는 gpt-4o-mini | **gpt-5-mini** (structured outputs strict + 검증/재시도 루프) |
+| UI 키워드 표시 | "주제" / "기업" 별도 섹션 | 통합 **"키워드"** 섹션 (시각 분산 ↓) |
+| 채널 등록 | (P1 향후) | **`/channels` 관리 페이지** (서버 액션 기반) |
+| 인증 | API 키 보안 | + `requireCronAuth` (Bearer `CRON_SECRET`) → 모든 API Route + cron 보호 |
+| URL → channel_id | `/channel/UC...` 처리 | + 6 패턴 fallback (`@handle`·`/c/`·동영상 URL·Schema.org meta 등 다 처리) |
+
+**완성 기준 충족 여부**
+| 항목 | 기준 | 결과 |
+|---|---|---|
+| 자동 감지 | 등록한 채널의 신규 영상이 사람 개입 없이 잡힘 | ✅ Vercel Cron 일 1회 실측 검증 |
+| 자막 폴백 3단계 | youtube-transcript → 메타데이터 → failed | ✅ 자막 비활성 영상이 metadata_fallback 으로 정상 진입 |
+| 중복 방지 | 같은 영상 재요약 X | ✅ `videos.video_id` UNIQUE + summary IS NULL 필터 + 코드 dedup 삼중 안전망 |
+| 구조화 요약 | 정해진 JSON Schema 준수 | ✅ OpenAI strict mode + 사후 검증/재시도 루프 |
+| 환각 방지 | 자막에 없는 정보 만들지 않음 | ✅ 인물 식별률 검증 — 정보 없는 영상은 빈 배열로 둠 |
+| 대시보드 | 카드 그리드 + 상세 (타임스탬프 점프) | ✅ 55+ 영상 카드 + 상세 페이지에 `(mm:ss)` 인라인 점프 링크 |
+| 자동화 상태 표시 | "마지막 확인" 시각 노출 | ✅ 홈 헤더에 `subscriptions.last_checked` MAX 표시 |
 
 ---
 
