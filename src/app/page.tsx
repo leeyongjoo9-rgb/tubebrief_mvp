@@ -52,7 +52,10 @@ export default async function HomePage({ searchParams }: PageProps) {
     )
     .not('summary', 'is', null)
     .is('deleted_at', null)
-    .order('published_at', { ascending: false })
+    // 최신 영상이 1행 좌측. published_at NULL 은 가장 뒤로.
+    // 동일 시각이면 video_id 로 안정적 tiebreaker.
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('video_id', { ascending: false })
   if (channel) displayQuery = displayQuery.eq('channel_id', channel)
   const videosRes = await displayQuery
 
@@ -151,9 +154,10 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
         <Link
           href="/channels"
-          className="shrink-0 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-input bg-background px-3.5 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          채널 관리 →
+          채널 관리
+          <span aria-hidden>→</span>
         </Link>
       </header>
 
@@ -161,11 +165,13 @@ export default async function HomePage({ searchParams }: PageProps) {
         <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           채널
         </h2>
-        <ChannelStrip
-          channels={channelStats}
-          totalCount={totalCount}
-          activeChannel={channel}
-        />
+        <div className="rounded-xl border bg-muted/40 p-3 shadow-sm">
+          <ChannelStrip
+            channels={channelStats}
+            totalCount={totalCount}
+            activeChannel={channel}
+          />
+        </div>
       </section>
 
       {channel && (
