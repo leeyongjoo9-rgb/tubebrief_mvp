@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
   let limit: number | null = null
   let force = false
   let channelId: string | null = null
+  let videoId: string | null = null
   const body = await req.json().catch(() => null)
   if (body && typeof body === 'object') {
     const limitVal = (body as { limit?: unknown }).limit
@@ -35,6 +36,8 @@ export async function POST(req: NextRequest) {
     if (forceVal === true) force = true
     const cid = (body as { channelId?: unknown }).channelId
     if (typeof cid === 'string' && cid.length > 0) channelId = cid
+    const vid = (body as { videoId?: unknown }).videoId
+    if (typeof vid === 'string' && vid.length > 0) videoId = vid
   }
 
   const supabase = createServerSupabaseClient()
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
 
   if (!force) query = query.is('summary', null)
   if (channelId) query = query.eq('channel_id', channelId)
+  if (videoId) query = query.eq('video_id', videoId)
   if (limit) query = query.limit(limit)
 
   const { data, error } = await query
