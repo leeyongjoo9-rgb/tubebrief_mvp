@@ -23,14 +23,16 @@ interface Subscription {
   exclude_keywords: string[]
 }
 
-// 영상 제목이 include_keywords 를 "모두" 포함하고 exclude_keywords 를 "전혀" 포함하지 않으면 매치.
-function matchSubscription(title: string | null, sub: Subscription): boolean {
-  const t = title ?? ''
+// 제목 + 설명을 합친 텍스트가 include_keywords 를 "모두" 포함하고 exclude_keywords 를 "전혀"
+// 포함하지 않으면 매치. 설명까지 본 이유는 채널 중에 출연자/호스트 정보를 제목에 안 쓰고
+// 설명 끝에 해시태그(#곽재식, #썬킴 등)로만 표기하는 곳이 많아서다.
+function matchSubscription(video: RssVideo, sub: Subscription): boolean {
+  const haystack = `${video.title ?? ''}\n${video.description ?? ''}`
   for (const kw of sub.include_keywords) {
-    if (!t.includes(kw)) return false
+    if (!haystack.includes(kw)) return false
   }
   for (const kw of sub.exclude_keywords) {
-    if (t.includes(kw)) return false
+    if (haystack.includes(kw)) return false
   }
   return true
 }
@@ -98,9 +100,7 @@ export async function POST(req: NextRequest) {
     entry.fetched = videos.length
 
     try {
-      const matchedVideos = videos.filter((v) =>
-        matchSubscription(v.title, sub),
-      )
+      const matchedVideos = videos.filter((v) => matchSubscription(v, sub))
       entry.matched = matchedVideos.length
 
       if (matchedVideos.length > 0) {

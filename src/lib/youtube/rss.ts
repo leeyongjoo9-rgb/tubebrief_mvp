@@ -3,6 +3,7 @@ import { XMLParser } from 'fast-xml-parser'
 export interface RssVideo {
   videoId: string
   title: string
+  description: string
   url: string
   publishedAt: string
 }
@@ -24,6 +25,9 @@ interface RssEntry {
   'yt:channelId'?: string
   title?: string
   published?: string
+  'media:group'?: {
+    'media:description'?: string
+  }
 }
 
 interface RssFeed {
@@ -71,6 +75,9 @@ export async function fetchChannelRss(channelId: string): Promise<RssResult> {
     .map((e) => ({
       videoId: e['yt:videoId'],
       title: String(e.title ?? '').trim(),
+      description: String(
+        e['media:group']?.['media:description'] ?? '',
+      ).trim(),
       url: `https://www.youtube.com/watch?v=${e['yt:videoId']}`,
       publishedAt: e.published ?? new Date().toISOString(),
     }))

@@ -11,7 +11,12 @@ export async function POST(req: NextRequest) {
   if (authFail) return authFail
 
   let limit: number | null = null
+  let channelId: string | null = null
   const body = await req.json().catch(() => null)
+  if (body && typeof body === 'object') {
+    const cid = (body as { channelId?: unknown }).channelId
+    if (typeof cid === 'string' && cid.length > 0) channelId = cid
+  }
   if (
     body &&
     typeof body === 'object' &&
@@ -30,6 +35,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'pending')
     .order('published_at', { ascending: false })
 
+  if (channelId) query = query.eq('channel_id', channelId)
   if (limit) query = query.limit(limit)
 
   const { data: pending, error: pendingErr } = await query

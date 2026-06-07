@@ -26,12 +26,15 @@ export async function POST(req: NextRequest) {
 
   let limit: number | null = null
   let force = false
+  let channelId: string | null = null
   const body = await req.json().catch(() => null)
   if (body && typeof body === 'object') {
     const limitVal = (body as { limit?: unknown }).limit
     if (typeof limitVal === 'number' && limitVal > 0) limit = limitVal
     const forceVal = (body as { force?: unknown }).force
     if (forceVal === true) force = true
+    const cid = (body as { channelId?: unknown }).channelId
+    if (typeof cid === 'string' && cid.length > 0) channelId = cid
   }
 
   const supabase = createServerSupabaseClient()
@@ -50,6 +53,7 @@ export async function POST(req: NextRequest) {
     .order('published_at', { ascending: false })
 
   if (!force) query = query.is('summary', null)
+  if (channelId) query = query.eq('channel_id', channelId)
   if (limit) query = query.limit(limit)
 
   const { data, error } = await query

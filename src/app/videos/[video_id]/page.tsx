@@ -154,14 +154,21 @@ export default async function VideoDetailPage({ params }: PageProps) {
         </p>
       </section>
 
-      {summary.topics.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground">
-            주제
-          </h2>
-          <TopicChips topics={summary.topics} />
-        </section>
-      )}
+      {(() => {
+        const keywords = [
+          ...(summary.topics ?? []),
+          ...(summary.companies ?? []),
+        ]
+        if (keywords.length === 0) return null
+        return (
+          <section className="mb-8">
+            <h2 className="mb-2 text-sm font-medium text-muted-foreground">
+              키워드
+            </h2>
+            <TopicChips topics={keywords} />
+          </section>
+        )
+      })()}
 
       {summary.people.length > 0 && (
         <section className="mb-8">
@@ -186,23 +193,29 @@ export default async function VideoDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {summary.companies && summary.companies.length > 0 && (
+      {summary.mentioned_people && summary.mentioned_people.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">
-            언급된 기업
+            언급된 인물
           </h2>
-          <ul className="flex flex-wrap gap-2">
-            {summary.companies.map((c, i) => (
-              <li
-                key={`${c}-${i}`}
-                className="rounded-md border bg-muted/30 px-2.5 py-1 text-xs"
-              >
-                {c}
+          <ul className="space-y-2">
+            {summary.mentioned_people.map((p, i) => (
+              <li key={`mp-${p.name}-${i}`} className="text-sm">
+                <span className="font-medium">{p.name}</span>
+                {p.role && (
+                  <span className="ml-2 text-muted-foreground">— {p.role}</span>
+                )}
+                {p.note && (
+                  <div className="ml-1 mt-0.5 text-xs text-muted-foreground">
+                    {p.note}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         </section>
       )}
+
 
       <section className="mb-12">
         <h2 className="mb-3 text-sm font-medium text-muted-foreground">
