@@ -2,7 +2,7 @@
 
 > 구독한 유튜브 채널의 신규 영상을 매일 자동으로 감지하여, AI 가 **헤드라인·본문·출연자·언급 인물·기업·주제·타임스탬프**까지 구조화한 요약 보고서로 변환하고 대시보드에 아카이빙해 두는 개인용 콘텐츠 다이제스트 서비스입니다.
 
-- **데모 URL**: <!-- TODO: Vercel 배포 후 채우기 --> (배포 예정)
+- **데모 URL**: https://tubebrief-mvp.vercel.app/
 - **GitHub**: https://github.com/leeyongjoo9-rgb/tubebrief_mvp
 - **개발자**: 이용주 — 바이브코딩 기반 서비스 구축 기말과제
 

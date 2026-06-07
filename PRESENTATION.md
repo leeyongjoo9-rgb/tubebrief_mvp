@@ -2,7 +2,7 @@
 
 > 발표 일자: 2026-06-09 (예정) · 발표자: 이용주
 > GitHub: https://github.com/leeyongjoo9-rgb/tubebrief_mvp
-> Demo URL: <!-- 배포 후 채우기 -->
+> Demo URL: https://tubebrief-mvp.vercel.app/
 
 ---
 
