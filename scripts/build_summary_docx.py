@@ -200,12 +200,13 @@ def main():
     add_heading(doc, "5. MCP / API 활용", level=1)
     add_table(
         doc,
-        ["API", "활용 목적", "연동 흐름"],
+        ["API / Platform", "활용 목적", "연동 흐름"],
         [
             ["OpenAI Chat (gpt-5-mini)", "자막 → 구조화 JSON 요약", "자막 + 시스템 프롬프트 + JSON Schema → API → Supabase jsonb 저장"],
             ["Supabase REST + JS SDK", "채널/구독/영상/요약 저장 조회", "서버는 service role, 클라이언트는 publishable key (RLS)"],
             ["YouTube RSS", "신규 영상 감지", "feeds/videos.xml 폴링 → XML 파싱 → 키워드 매치 → INSERT"],
             ["YouTube 페이지 스크래핑", "URL → channel_id 추출", "6 패턴 fallback (canonical / og:url / Schema.org / JSON channelId)"],
+            ["Vercel Platform (인프라)", "Cron 자동화 + Serverless Functions + 환경변수 + GitHub 자동 빌드", "vercel.json 의 crons → 매일 0시 UTC /api/cron 자동 트리거. push 시 자동 재배포 (GitHub webhook)"],
         ],
         col_widths_cm=[4.0, 4.0, 9.0],
     )
@@ -276,11 +277,25 @@ def main():
 
     # 8. 한계와 개선
     add_heading(doc, "8. 한계와 개선", level=1)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(4)
+    r1 = p.add_run("운영 비용 / 데이터: ")
+    set_run_font(r1, size=10, bold=True)
+    r2 = p.add_run(
+        "영상 mp4 는 저장 안 함 (YouTube 호스팅). DB 에는 영상 1편당 ~20~55KB (메타 + 자막 + 요약). "
+        "Supabase Free 500MB 안에서 약 1만 편 보관 가능 → 월 100편 처리 시 8~10년 무료 운영. "
+        "실제 월 운영비 ≈ $2.5 (OpenAI 만), Supabase/Vercel/GitHub 모두 무료 tier."
+    )
+    set_run_font(r2, size=10)
+
     add_table(
         doc,
         ["한계", "향후 개선"],
         [
-            ["RSS 최근 15개 제약 (이전 영상 못 잡음)", "YouTube Data API 도입 (쿼터·인증 부담)"],
+            [
+                "신규 등록 채널의 RSS 15편 이전 영상 백필 불가 (단, 일일 cron 운영 중에는 신규 영상 누락 없음 → 정상 운영에선 한계 아님)",
+                "YouTube Data API 도입 시 등록 직후 백필 가능 (쿼터·인증 부담)",
+            ],
             ["Vercel Hobby 60초 / 일 1회 cron", "Pro 업그레이드 또는 외부 워커 분리"],
             ["자막 음성 인식 오류 (곽재식→곽제식)", "description 해시태그를 정답 표기로 LLM 에 전달"],
             ["인증 부재 — 배포 URL 공개", "Vercel Password Protection 또는 Supabase Auth"],
