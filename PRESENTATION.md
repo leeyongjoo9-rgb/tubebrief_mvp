@@ -1,7 +1,7 @@
 # TubeBrief — 유튜브 구독 채널 자동 요약 서비스
 
 > 발표 일자: 2026-06-09 (예정) · 발표자: 이용주
-> GitHub: https://github.com/leeyongjoo9-rgb/tubebrief
+> GitHub: https://github.com/leeyongjoo9-rgb/tubebrief_mvp
 > Demo URL: <!-- 배포 후 채우기 -->
 
 ---
