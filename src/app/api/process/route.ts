@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     .from('videos')
     .select('video_id, channel_id, title')
     .eq('status', 'pending')
+    .is('deleted_at', null)
     .order('published_at', { ascending: false })
 
   if (channelId) query = query.eq('channel_id', channelId)

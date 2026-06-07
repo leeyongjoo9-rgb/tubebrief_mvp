@@ -31,7 +31,8 @@ export default async function HomePage({ searchParams }: PageProps) {
     supabase
       .from('videos')
       .select('video_id, channel_id, published_at')
-      .not('summary', 'is', null),
+      .not('summary', 'is', null)
+      .is('deleted_at', null),
     supabase
       .from('channels')
       .select('channel_id, title')
@@ -50,6 +51,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       `,
     )
     .not('summary', 'is', null)
+    .is('deleted_at', null)
     .order('published_at', { ascending: false })
   if (channel) displayQuery = displayQuery.eq('channel_id', channel)
   const videosRes = await displayQuery

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { SourceBadge } from '@/components/source-badge'
 import { TopicChips } from '@/components/topic-chips'
+import { DeleteVideoButton } from '@/components/videos/delete-button'
 import type { Summary } from '@/lib/llm/openai'
 
 interface PageProps {
@@ -96,6 +97,7 @@ export default async function VideoDetailPage({ params }: PageProps) {
       `,
     )
     .eq('video_id', video_id)
+    .is('deleted_at', null)
     .single<VideoRow>()
 
   if (error || !data || !data.summary) notFound()
@@ -119,14 +121,17 @@ export default async function VideoDetailPage({ params }: PageProps) {
         <Link href="/" className="text-muted-foreground hover:text-foreground">
           ← 홈으로
         </Link>
-        <a
-          href={youtubeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          유튜브에서 보기 ↗
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href={youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            유튜브에서 보기 ↗
+          </a>
+          <DeleteVideoButton videoId={v.video_id} />
+        </div>
       </nav>
 
       <header className="mb-8 space-y-3">

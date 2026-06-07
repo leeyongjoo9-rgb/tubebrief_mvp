@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       `,
     )
     .in('status', ['transcript_ok', 'metadata_fallback'])
+    .is('deleted_at', null)
     .order('published_at', { ascending: false })
 
   if (!force) query = query.is('summary', null)

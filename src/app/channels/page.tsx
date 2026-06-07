@@ -40,7 +40,8 @@ export default async function ChannelsPage() {
     supabase
       .from('videos')
       .select('channel_id')
-      .not('summary', 'is', null),
+      .not('summary', 'is', null)
+      .is('deleted_at', null),
   ])
 
   const subs = (subsRes.data ?? []) as SubscriptionRow[]
